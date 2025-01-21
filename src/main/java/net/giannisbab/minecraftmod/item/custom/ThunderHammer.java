@@ -19,7 +19,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 public class ThunderHammer extends Item {
-    private static final float RAY_DISTANCE = 150.0F; // Adjust as needed
+    private static final float RAY_DISTANCE = 150.0F; // How far you can strike
+    private static final int HOLE_RADIUS = 2;         // Radius of the hole
 
     public ThunderHammer(Properties properties) {
         super(properties);
@@ -44,10 +45,14 @@ public class ThunderHammer extends Item {
                         // If we hit a Block
                         BlockHitResult blockHit = (BlockHitResult) hitResult;
                         BlockPos blockPos = blockHit.getBlockPos();
+
                         spawnLightning(world,
                                 blockPos.getX() + 0.5,
                                 blockPos.getY(),
                                 blockPos.getZ() + 0.5);
+
+                        // Create a small random hole around the strike position
+                        createRandomHole(world, blockPos, HOLE_RADIUS);
                     }
                     default -> {
                         // Missed everything
@@ -90,7 +95,7 @@ public class ThunderHammer extends Item {
                 e -> e instanceof LivingEntity && e != player
         );
 
-        // If no entity was hit return the block result
+        // If no entity was hit, return the block result
         if (entityResult == null) {
             return blockResult;
         } else {
@@ -107,4 +112,68 @@ public class ThunderHammer extends Item {
             world.addFreshEntity(lightningBolt);
         }
     }
+
+    /**
+     * Randomly destroys blocks in a small cubic region around the given center.
+     * The destruction chance can be tweaked to create a more or less "natural" hole.
+     */
+    private void createRandomHole(Level world, BlockPos center, int radius) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+
+                double distance = Math.sqrt(dx * dx + dz * dz);
+
+                // Add a small random offset so the boundary is not perfectly circular
+                if (distance <= radius + world.random.nextFloat() * 0.5f) {
+
+                    // Vertical bounds
+                    int minY = center.getY() - radius;
+                    int maxY = center.getY() + radius;
+
+                    // Find the top non-air block in this column
+                    BlockPos topBlockPos = null;
+                    for (int y = maxY; y >= minY; y--) {
+                        BlockPos checkPos = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
+                        // If it's not air, that's our top
+                        if (!world.isEmptyBlock(checkPos)) {
+                            topBlockPos = checkPos;
+                            break;
+                        }
+                    }
+
+                    // Destroy the top block and then apply a random destruction chance to blocks below.
+                    if (topBlockPos != null) {
+                        // Always destroy the top block
+                        world.destroyBlock(topBlockPos, false);
+
+                        // Pick a random destruction chance
+                        float destructionChance = 0.3f + world.random.nextFloat() * 0.5f;
+
+                        // Randomly destroy blocks below the top
+                        for (int y = topBlockPos.getY() - 1; y >= minY; y--) {
+                            BlockPos belowPos = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
+                            if (!world.isEmptyBlock(belowPos)) {
+                                if (world.random.nextFloat() < destructionChance) {
+                                    world.destroyBlock(belowPos, false);
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        // If no top block was found at all, do random destruction or skip it:
+                        float destructionChance = 0.3f + world.random.nextFloat() * 0.5f;
+                        for (int y = maxY; y >= minY; y--) {
+                            BlockPos currentPos = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
+                            if (!world.isEmptyBlock(currentPos)) {
+                                if (world.random.nextFloat() < destructionChance) {
+                                    world.destroyBlock(currentPos, false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
