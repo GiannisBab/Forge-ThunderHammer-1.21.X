@@ -1,6 +1,7 @@
 package net.giannisbab.minecraftmod.item.custom;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel; // Added import for server-level world
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EntityType;
@@ -27,6 +28,15 @@ public class ThunderHammer extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         if (!world.isClientSide) {
+            // Set the weather to thunderstorm when the hammer is used.
+            // Make sure that we are on the server side by checking for ServerLevel.
+            if (world instanceof ServerLevel serverWorld) {
+                // The parameters are: clearTime, rainTime, raining, thundering.
+                // Setting clearTime to 0 and rainTime to 6000 ticks (5 minutes) with raining and thundering true
+                // will start a thunderstorm immediately.
+                serverWorld.setWeatherParameters(0, 6000, true, true);
+            }
+
             HitResult hitResult = getTargetHitResult(world, player, RAY_DISTANCE);
 
             if (hitResult != null) {
@@ -45,12 +55,12 @@ public class ThunderHammer extends Item {
                         double x = blockPos.getX() + 0.5;
                         double y = blockPos.getY();
                         double z = blockPos.getZ() + 0.5;
-                        
+
                         spawnLightning(world, x, y, z);
                         world.explode(null, x, y, z, 4.0F, Level.ExplosionInteraction.TNT);
                     }
                     default -> {
-                        // Missed everything
+                        // Missed everything; no action needed
                     }
                 }
             }
@@ -107,5 +117,4 @@ public class ThunderHammer extends Item {
             world.addFreshEntity(lightningBolt);
         }
     }
-
 }
