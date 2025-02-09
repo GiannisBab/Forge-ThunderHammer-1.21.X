@@ -17,6 +17,10 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import java.util.Random;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.level.block.Blocks;
 
 public class ThunderHammer extends Item {
     private static final float RAY_DISTANCE = 150.0F;
@@ -40,13 +44,13 @@ public class ThunderHammer extends Item {
                     case ENTITY -> {
                         EntityHitResult entityHit = (EntityHitResult) hitResult;
                         Vec3 location = entityHit.getLocation();
-                        BlockPos entityPos = BlockPos.containing(location);
+                        // Get the block position below the entity
+                        BlockPos entityPos = BlockPos.containing(location).below();
                         spawnLightningAtSky(world, entityPos);
                     }
                     case BLOCK -> {
                         BlockHitResult blockHit = (BlockHitResult) hitResult;
-                        BlockPos blockPos = blockHit.getBlockPos();
-                        spawnLightningAtSky(world, blockPos);
+                        spawnLightningAtSky(world, blockHit.getBlockPos());
                     }
                     default -> {}
                 }
@@ -104,9 +108,43 @@ public class ThunderHammer extends Item {
             if (world.canSeeSky(abovePos)) {
                 spawnLightning(world, strikePos.getX() + 0.5, strikePos.getY() + 1, strikePos.getZ() + 0.5);
                 world.explode(null, strikePos.getX() + 0.5, strikePos.getY() + 1, strikePos.getZ() + 0.5, 4.0F, Level.ExplosionInteraction.TNT);
+                launchNearbyBlocks(world, strikePos);
                 return;
             }
             strikePos = abovePos;
+        }
+    }
+
+    // Creates flying block entities from nearby blocks
+    private void launchNearbyBlocks(Level world, BlockPos center) {
+        Random random = new Random();
+        int radius = 3;
+
+        for (BlockPos pos : BlockPos.betweenClosed(
+                center.offset(-radius, -2, -radius),
+                center.offset(radius, 2, radius))) {
+
+            if (random.nextFloat() < 0.3f && world.getBlockState(pos).getFluidState().isEmpty()) {
+                BlockState blockState = world.getBlockState(pos);
+
+                if (!blockState.isAir() && !blockState.liquid()) {
+                    FallingBlockEntity fallingBlock = FallingBlockEntity.fall(world, pos, blockState);
+
+                    if (fallingBlock != null) {
+                        // Disable sound effects from this falling block
+                        fallingBlock.setSilent(true);
+                        double dx = (random.nextDouble() - 0.5) * 0.8;
+                        double dy = random.nextDouble() * 0.8 + 0.3;
+                        double dz = (random.nextDouble() - 0.5) * 0.8;
+
+                        fallingBlock.setDeltaMovement(dx, dy, dz);
+                        fallingBlock.time = 1;
+
+                        world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                        world.addFreshEntity(fallingBlock);
+                    }
+                }
+            }
         }
     }
 }
