@@ -54,10 +54,12 @@ public class ThunderHammer extends Item {
                         // Get the block position below the entity
                         BlockPos entityPos = BlockPos.containing(location).below();
                         spawnLightningAtSky(world, entityPos);
+                        itemstack.hurtAndBreak(1, player, hand == InteractionHand.MAIN_HAND ? net.minecraft.world.entity.EquipmentSlot.MAINHAND : net.minecraft.world.entity.EquipmentSlot.OFFHAND);
                     }
                     case BLOCK -> {
                         BlockHitResult blockHit = (BlockHitResult) hitResult;
                         spawnLightningAtSky(world, blockHit.getBlockPos());
+                        itemstack.hurtAndBreak(1, player, hand == InteractionHand.MAIN_HAND ? net.minecraft.world.entity.EquipmentSlot.MAINHAND : net.minecraft.world.entity.EquipmentSlot.OFFHAND);
                     }
                     default -> {}
                 }

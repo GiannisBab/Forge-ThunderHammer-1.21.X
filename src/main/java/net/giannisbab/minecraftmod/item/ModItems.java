@@ -12,11 +12,7 @@ public class ModItems {
             DeferredRegister.create(ForgeRegistries.ITEMS, "minecraftmod");
 
     public static final RegistryObject<Item> THUNDERHAMMER = ITEMS.register("thunderhammer",
-            () -> new ThunderHammer(new Item.Properties()
-                    .stacksTo(1) // Usually a hammer doesn't stack
-                    .durability(500) // Optional: give it durability
-            )
-    );
+            () -> new ThunderHammer(new Item.Properties().stacksTo(1).durability(250)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
