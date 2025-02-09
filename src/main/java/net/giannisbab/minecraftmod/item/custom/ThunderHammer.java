@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.Blocks;
 
 public class ThunderHammer extends Item {
     private static final float RAY_DISTANCE = 150.0F;
+    private static final int COOLDOWN_TICKS = 40;
 
     public ThunderHammer(Properties properties) {
         super(properties);
@@ -31,6 +32,12 @@ public class ThunderHammer extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        
+        if (player.getCooldowns().isOnCooldown(this)) {
+            return InteractionResultHolder.fail(itemstack);
+        }
+
         if (!world.isClientSide) {
             // Start a thunderstorm
             if (world instanceof ServerLevel serverWorld) {
@@ -55,8 +62,10 @@ public class ThunderHammer extends Item {
                     default -> {}
                 }
             }
+            
+            player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
         }
-        return InteractionResultHolder.success(player.getItemInHand(hand));
+        return InteractionResultHolder.success(itemstack);
     }
 
     // Returns the closest hit result between blocks and entities
