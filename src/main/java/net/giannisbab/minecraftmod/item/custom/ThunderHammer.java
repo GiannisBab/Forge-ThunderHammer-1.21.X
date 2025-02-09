@@ -1,7 +1,7 @@
 package net.giannisbab.minecraftmod.item.custom;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel; // Added import for server-level world
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EntityType;
@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 
 public class ThunderHammer extends Item {
-    private static final float RAY_DISTANCE = 150.0F; // How far you can strike
+    private static final float RAY_DISTANCE = 150.0F;
 
     public ThunderHammer(Properties properties) {
         super(properties);
@@ -28,12 +28,8 @@ public class ThunderHammer extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
         if (!world.isClientSide) {
-            // Set the weather to thunderstorm when the hammer is used.
-            // Make sure that we are on the server side by checking for ServerLevel.
+            // Start a thunderstorm
             if (world instanceof ServerLevel serverWorld) {
-                // The parameters are: clearTime, rainTime, raining, thundering.
-                // Setting clearTime to 0 and rainTime to 6000 ticks (5 minutes) with raining and thundering true
-                // will start a thunderstorm immediately.
                 serverWorld.setWeatherParameters(0, 6000, true, true);
             }
 
@@ -42,55 +38,39 @@ public class ThunderHammer extends Item {
             if (hitResult != null) {
                 switch (hitResult.getType()) {
                     case ENTITY -> {
-                        // If we hit an Entity
                         EntityHitResult entityHit = (EntityHitResult) hitResult;
                         Vec3 location = entityHit.getLocation();
-                        spawnLightning(world, location.x, location.y, location.z);
-                        world.explode(null, location.x, location.y, location.z, 4.0F, Level.ExplosionInteraction.TNT);
+                        BlockPos entityPos = BlockPos.containing(location);
+                        spawnLightningAtSky(world, entityPos);
                     }
                     case BLOCK -> {
-                        // If we hit a Block
                         BlockHitResult blockHit = (BlockHitResult) hitResult;
                         BlockPos blockPos = blockHit.getBlockPos();
-                        double x = blockPos.getX() + 0.5;
-                        double y = blockPos.getY();
-                        double z = blockPos.getZ() + 0.5;
-
-                        spawnLightning(world, x, y, z);
-                        world.explode(null, x, y, z, 4.0F, Level.ExplosionInteraction.TNT);
+                        spawnLightningAtSky(world, blockPos);
                     }
-                    default -> {
-                        // Missed everything; no action needed
-                    }
+                    default -> {}
                 }
             }
         }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 
-    /**
-     * Performs a combined ray trace for both blocks and entities,
-     * and returns the closest HitResult (EntityHitResult or BlockHitResult).
-     */
+    // Returns the closest hit result between blocks and entities
     private HitResult getTargetHitResult(Level world, Player player, double maxDistance) {
-        // 1) Block pick
         HitResult blockResult = player.pick(maxDistance, 0.0F, false);
         double blockDist = Double.MAX_VALUE;
         if (blockResult != null) {
             blockDist = blockResult.getLocation().distanceToSqr(player.getEyePosition(1.0F));
         }
 
-        // 2) Entity ray trace
         Vec3 startVec = player.getEyePosition(1.0F);
         Vec3 lookVec = player.getLookAngle();
         Vec3 endVec = startVec.add(lookVec.x * maxDistance, lookVec.y * maxDistance, lookVec.z * maxDistance);
 
-        // Expand the player's bounding box to ensure we catch entities near the ray
         AABB boundingBox = player.getBoundingBox()
                 .expandTowards(lookVec.scale(maxDistance))
                 .inflate(1.0D);
 
-        // Updated filter: now includes all LivingEntities except the player
         EntityHitResult entityResult = ProjectileUtil.getEntityHitResult(
                 world,
                 player,
@@ -100,11 +80,9 @@ public class ThunderHammer extends Item {
                 e -> e instanceof LivingEntity && e != player
         );
 
-        // If no entity was hit, return the block result
         if (entityResult == null) {
             return blockResult;
         } else {
-            // Compare distances to see which is closer
             double entityDist = entityResult.getLocation().distanceToSqr(player.getEyePosition(1.0F));
             return (entityDist < blockDist) ? entityResult : blockResult;
         }
@@ -115,6 +93,20 @@ public class ThunderHammer extends Item {
         if (lightningBolt != null) {
             lightningBolt.moveTo(x, y, z);
             world.addFreshEntity(lightningBolt);
+        }
+    }
+
+    // Finds the highest block below sky and strikes it with lightning
+    private void spawnLightningAtSky(Level world, BlockPos targetPos) {
+        BlockPos strikePos = targetPos;
+        while (strikePos.getY() < world.getMaxBuildHeight()) {
+            BlockPos abovePos = strikePos.above();
+            if (world.canSeeSky(abovePos)) {
+                spawnLightning(world, strikePos.getX() + 0.5, strikePos.getY() + 1, strikePos.getZ() + 0.5);
+                world.explode(null, strikePos.getX() + 0.5, strikePos.getY() + 1, strikePos.getZ() + 0.5, 4.0F, Level.ExplosionInteraction.TNT);
+                return;
+            }
+            strikePos = abovePos;
         }
     }
 }
