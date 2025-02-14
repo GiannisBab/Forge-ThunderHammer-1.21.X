@@ -14,7 +14,7 @@
 
 ---
 
-## Screenshots
+## Media
 
 <img src="screenshots/demo4.png" alt="Thunder Hammer Texture" width="600">
 
@@ -23,6 +23,8 @@
 <img src="screenshots/demo1.png" alt="Thunder Hammer in use" width="600">
 
 *Thunder Hammer εν δράσει*
+
+https://github.com/user-attachments/assets/01683ad2-dc0e-4b1f-8af0-43a376691ed3
 
 ---
 
