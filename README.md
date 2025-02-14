@@ -58,7 +58,7 @@ https://github.com/user-attachments/assets/01683ad2-dc0e-4b1f-8af0-43a376691ed3
 1. **Κατεβάστε ή κλωνοποιήστε** αυτό το αποθετήριο.  
 2. **Ανοίξτε** το project σε IDE που υποστηρίζει Gradle.  
 3. **Τρέξτε** την εντολή `gradlew build` (ή `./gradlew build`) για δημιουργία του τελικού JAR.  
-4. **Μεταφέρετε** το [JAR](https://github.com/GiannisBab/Forge-ThunderHammer-1.21.X/blob/master/thunderhammer-0.01.jar) στον φάκελο `mods`.  
+4. **Μεταφέρετε** το [JAR](https://github.com/GiannisBab/Forge-ThunderHammer-1.21.X/blob/master/minecraftmod-0.0.1.jar) στον φάκελο `mods`.  
 5. **Εκκινήστε** το παιχνίδι και δοκιμάστε το Thunder Hammer είτε φτιάχνοντας το στο survival mode είτε αναζητώντας το στο search bar του creative mode.
 
 ---
