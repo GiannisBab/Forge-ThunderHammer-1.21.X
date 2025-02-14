@@ -37,7 +37,7 @@ https://github.com/user-attachments/assets/01683ad2-dc0e-4b1f-8af0-43a376691ed3
 ---
 
 ## Οδηγίες Εγκατάστασης
-1. **Κατεβάστε** το [Forge](https://files.minecraftforge.net/) για την αντίστοιχη έκδοση του Minecraft.  
+1. **Κατεβάστε** την έκδοση 1.21 του [Forge](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.21.html).  
 2. **Ανοίξτε** τον φάκελο του Minecraft (συνήθως `%appdata%/.minecraft` σε Windows).  
 3. **Τοποθετήστε** το αρχείο JAR του mod στον φάκελο `mods/`.  
 4. **Εκκινήστε** το Minecraft μέσω του Forge Profile.
